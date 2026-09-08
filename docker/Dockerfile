@@ -1,0 +1,28 @@
+FROM nvidia/cuda:13.0.0-devel-ubuntu24.04
+
+ARG LLAMA_REPO=https://github.com/unslothai/llama.cpp
+ARG LLAMA_BRANCH=glm5next/upstream
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    git \
+    libcurl4-openssl-dev \
+    pciutils \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+RUN git clone --branch "${LLAMA_BRANCH}" "${LLAMA_REPO}" llama.cpp \
+  && cmake llama.cpp -B llama.cpp/build \
+       -DBUILD_SHARED_LIBS=OFF \
+       -DGGML_CUDA=ON \
+  && cmake --build llama.cpp/build --config Release -j --clean-first \
+       --target llama-cli llama-server llama-gguf-split
+
+WORKDIR /workspace
+EXPOSE 8000
+
+ENTRYPOINT ["/opt/llama.cpp/build/bin/llama-server"]
+

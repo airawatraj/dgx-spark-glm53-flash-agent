@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+models/
+llama.cpp/
+*.log
+docs/runtime_snapshot_*.txt
+assets/*.tmp
+

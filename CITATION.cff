@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: "Benchmarking GLM-5.3-Flash on DGX Spark"
+message: "If this benchmark harness helps your work, cite this repository."
+type: software
+authors:
+  - family-names: "Rawat"
+    given-names: "Raj"
+license: MIT
+

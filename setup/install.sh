@@ -19,7 +19,8 @@ echo "[1/5] Checking Docker..."
 if command -v docker >/dev/null 2>&1; then
   docker version --format '  Docker Server Version: {{.Server.Version}}' || true
 else
-  echo "  WARNING: Docker not found. Local llama.cpp launch can still work."
+  echo "  ERROR: Docker not found. Install Docker and NVIDIA Container Toolkit on DGX Spark."
+  exit 1
 fi
 
 echo
@@ -61,7 +62,7 @@ echo "================================================================="
 echo "Preflight complete."
 echo "Next:"
 echo "  1. bash setup/download_model.sh"
-echo "  2. bash setup/build_llama_cpp.sh"
-echo "  3. bash setup/start_llama_server.sh"
+echo "  2. bash docker/build.sh"
+echo "  3. bash docker/start.sh"
 echo "================================================================="
 

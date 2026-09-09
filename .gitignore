@@ -3,8 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 models/
-llama.cpp/
 *.log
-docs/runtime_snapshot_*.txt
+benchmark/results_arena.csv
+benchmark/results_full.csv
 assets/*.tmp
-

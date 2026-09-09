@@ -54,17 +54,13 @@ MODEL=unsloth/GLM-5.3-Flash-GGUF
 QUANT=UD-IQ3_XXS
 ```
 
-### 3. Build llama.cpp with GLM-5.3-Flash support
+### 3. Build Docker Image
 
 ```bash
-bash setup/build_llama_cpp.sh
+bash docker/build.sh
 ```
 
-The script follows Unsloth's documented GLM-5.3-Flash branch:
-
-```bash
-git clone --branch glm5next/upstream https://github.com/unslothai/llama.cpp
-```
+Follows Unsloth's documented GLM-5.3-Flash branch (`glm5next/upstream`) inside an optimized CUDA container.
 
 ### 4. Start OpenAI-compatible server
 
@@ -72,11 +68,9 @@ git clone --branch glm5next/upstream https://github.com/unslothai/llama.cpp
 bash docker/start.sh
 ```
 
-For a local non-Docker launch after `setup/build_llama_cpp.sh`:
-
-```bash
-bash setup/start_llama_server.sh
-```
+Container management:
+- Status & logs: `bash docker/status.sh`
+- Stop container: `bash docker/stop.sh`
 
 ### 5. Smoke Test
 
@@ -90,8 +84,8 @@ bash benchmark/smoke_test.sh localhost:8000
 # TTFT, decode TPS, concurrency, context sweep:
 uv run benchmark/benchmark_speed.py
 
-# Reasoning-effort comparison:
-uv run benchmark/benchmark_reasoning.py
+# Spark Arena / llama-benchy multi-depth sweep:
+uv run benchmark/benchmark_speed_arena.py
 
 # Tool calling / agentic sanity suite:
 uv run benchmark/benchmark_smarts.py
@@ -99,14 +93,22 @@ uv run benchmark/benchmark_smarts.py
 
 ---
 
+## Operational Guidelines (DGX Spark)
+
+- **Memory Headroom**: `UD-IQ3_XXS` is documented around 120GB. On a 128GB unified-memory system, avoid running background GPU workloads. Start with `--ctx-size 131072` and single parallel slots before scaling concurrency.
+- **Sampling Defaults**: Documented task default is `temperature=1.0`, `top_p=0.95` (or `temperature=0.95`, `top_p=1.0` for DeepSWE-style coding).
+- **Reasoning Modes**: GLM-5.3-Flash supports `low`, `high`, and `max`. Use `max` as baseline for complex agentic workloads, or pass `--reasoning-effort` to `benchmark_speed.py`.
+
+---
+
 ## Benchmark Plan
 
 1. Establish a stable `UD-IQ3_XXS` boot profile on DGX Spark with enough memory headroom to avoid host pressure.
-2. Measure baseline single-stream decode, TTFT, prompt processing, and context scaling at 4K, 16K, 64K, 128K, 256K, and higher if stable.
+2. Measure baseline single-stream decode, TTFT, prompt processing, and context scaling at 4K, 16K, 64K, 128K, and higher if stable.
 3. Sweep reasoning modes: `low`, `high`, `max`.
 4. Sweep MTP support when available: off, `n=2`, and optionally `n=3`.
 5. Run tool-eval-bench short/trials/perf profiles against the same OpenAI-compatible endpoint.
-6. Record every verified run in `docs/RESULTS.md` before promoting numbers into this README.
+6. Run full multi-depth Spark Arena sweep via `benchmark/benchmark_speed_arena.py`.
 
 ---
 
@@ -132,12 +134,10 @@ curl http://localhost:8000/v1/chat/completions \
 ## Repository Layout
 
 ```text
-benchmark/      OpenAI-compatible speed, reasoning, smoke, and tool-eval benchmarks
-docker/         Container build/start/stop/status helpers
-docs/           Results ledger and operational notes
-setup/          Host preflight, model download, llama.cpp build, local server launch
-tools/          Snapshot and watchdog utilities
-assets/         Benchmark screenshots and charts
+assets/         Benchmark screenshots and performance charts
+benchmark/      Speed, Spark Arena sweep, smarts/tool-eval, and smoke test
+docker/         Dockerfile and container lifecycle helpers (build, start, status, stop)
+setup/          DGX Spark preflight and model download scripts
 ```
 
 ---

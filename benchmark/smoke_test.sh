@@ -17,11 +17,23 @@ echo "  Target Endpoint: $BASE"
 echo "  Served Model:    $MODEL"
 echo
 
-echo "[1/4] Health Check..."
-if curl -sf -m 5 "$BASE/health" >/dev/null 2>&1; then
+echo "[1/4] Health Check (waiting for model load if booting)..."
+MAX_WAIT="${MAX_WAIT:-120}"
+WAITED=0
+while [ "$WAITED" -lt "$MAX_WAIT" ]; do
+  if curl -sf -m 2 "$BASE/health" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 3
+  WAITED=$((WAITED + 3))
+  printf "  Waiting for server readiness (%ds/%ds)...\r" "$WAITED" "$MAX_WAIT"
+done
+
+if curl -sf -m 2 "$BASE/health" >/dev/null 2>&1; then
   echo "  ✓ Server is healthy (/health OK)"
 else
-  echo "  ✗ Server is not ready at $BASE/health"
+  echo
+  echo "  ✗ Server is not ready at $BASE/health after ${MAX_WAIT}s"
   echo "  Check container logs with: docker logs --tail 50 spark-brain"
   exit 1
 fi

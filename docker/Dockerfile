@@ -4,7 +4,6 @@ FROM nvidia/cuda:12.8.1-devel-ubuntu24.04
 
 ARG LLAMA_REPO=https://github.com/unslothai/llama.cpp
 ARG LLAMA_BRANCH=glm5next/upstream
-ARG CUDA_ARCH="120;121"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -21,7 +20,6 @@ RUN git clone --branch "${LLAMA_BRANCH}" "${LLAMA_REPO}" llama.cpp \
   && cmake llama.cpp -B llama.cpp/build \
        -DBUILD_SHARED_LIBS=OFF \
        -DGGML_CUDA=ON \
-       -DCMAKE_CUDA_ARCHITECTURES="${CUDA_ARCH}" \
   && cmake --build llama.cpp/build --config Release -j --clean-first \
        --target llama-cli llama-mtmd-cli llama-server llama-gguf-split
 

@@ -74,7 +74,11 @@ fi
 
 echo
 echo "[6/6] Checking downloaded model files..."
-SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l || echo 0)
+SHARDS=0
+if [ -d "$MODEL_DIR" ]; then
+  SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l | tr -d '[:space:]')
+fi
+SHARDS="${SHARDS:-0}"
 if [ "$SHARDS" -ge 4 ]; then
   echo "  Found $SHARDS GGUF shards under $MODEL_DIR"
 elif [ "$SHARDS" -gt 0 ]; then

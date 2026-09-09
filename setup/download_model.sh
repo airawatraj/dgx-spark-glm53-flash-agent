@@ -22,7 +22,8 @@ echo
 
 mkdir -p "$MODEL_DIR"
 
-EXISTING_SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l || echo 0)
+EXISTING_SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l | tr -d '[:space:]')
+EXISTING_SHARDS="${EXISTING_SHARDS:-0}"
 if [ "$EXISTING_SHARDS" -ge 4 ]; then
   echo "Found all $EXISTING_SHARDS existing $QUANT GGUF shards under $MODEL_DIR:"
   find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" | sort | sed 's/^/  /'

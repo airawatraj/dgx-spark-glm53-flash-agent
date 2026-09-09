@@ -129,6 +129,8 @@ docker run -d \
   --cache-type-v "$CACHE_TYPE_V" \
   --batch-size "$BATCH_SIZE" \
   --ubatch-size "$UBATCH" \
+  --slot-prompt-similarity 0.0 \
+  --no-context-shift \
   --temp 1.0 \
   --top-p 0.95 \
   --chat-template-kwargs "{\"reasoning_effort\":\"${REASONING_EFFORT}\"}" \

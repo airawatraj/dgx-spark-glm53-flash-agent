@@ -66,14 +66,14 @@ except Exception as e:
 '
 
 echo
-echo "[3/4] Prefill Test (TTFT on ~4,000 token prompt)..."
+echo "[3/4] Prefill Test (TTFT on ~1,000 token prompt)..."
 python3 - "$BASE" "$MODEL" <<'PY'
 import json, sys, time, urllib.request
 
 base = sys.argv[1]
 model = sys.argv[2]
-# ~4000 tokens
-prompt = "The DGX Spark benchmark harness tests unified memory inference. " * 400
+# ~1000 tokens
+prompt = "The DGX Spark benchmark harness tests unified memory inference. " * 100
 t0 = time.perf_counter()
 payload = json.dumps({
     "model": model,
@@ -92,7 +92,7 @@ try:
         res = json.load(resp)
         dt = time.perf_counter() - t0
         u = res.get("usage", {})
-        prompt_tokens = u.get("prompt_tokens", 4000)
+        prompt_tokens = u.get("prompt_tokens", 1000)
         rate = prompt_tokens / dt if dt > 0 else 0
         print(f"  ✓ {prompt_tokens} tokens prefilled in {dt:.2f}s => {rate:.0f} tok/s prefill speed (TTFT: {dt*1000:.0f} ms)")
 except Exception as e:

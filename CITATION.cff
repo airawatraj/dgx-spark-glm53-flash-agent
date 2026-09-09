@@ -1,9 +1,29 @@
 cff-version: 1.2.0
-title: "Benchmarking GLM-5.3-Flash on DGX Spark"
-message: "If this benchmark harness helps your work, cite this repository."
+title: "Running Cogni-Brain (GLM-5.3-Flash) on NVIDIA DGX Spark with llama.cpp and MTP Speculative Decoding"
+message: "If this benchmark harness helps your work, please cite this repository."
 type: software
 authors:
   - family-names: "Rawat"
-    given-names: "Raj"
+    given-names: "Rajendra Singh"
+    affiliation: "cogni.chat"
+repository-code: "https://github.com/airawatraj/dgx-spark-glm53-flash-agent"
+abstract: >-
+  A production-ready technical benchmarking suite for running unsloth/GLM-5.3-Flash-GGUF
+  (320B total params, 18B active MoE) on a single NVIDIA DGX Spark (GB10 Grace-Blackwell,
+  128 GB unified memory) served as Cogni-Brain in container spark-brain via llama.cpp
+  with native Blackwell sm_121a compilation, MTP speculative decoding, and quantized KV caching.
+keywords:
+  - "GLM-5.3-Flash"
+  - "ox-alpha"
+  - "Cogni-Brain"
+  - "DGX Spark"
+  - "GB10"
+  - "Grace Blackwell"
+  - "llama.cpp"
+  - "GGUF"
+  - "MTP"
+  - "Speculative Decoding"
+  - "AI Agents"
 license: MIT
-
+version: 1.0.0
+date-released: "2026-09-09"

@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # ///
 """
-DGX Spark / GLM-5.3-Flash Full Spark-Arena Benchmark
+DGX Spark / Cogni-Brain (GLM-5.3-Flash) Full Spark-Arena Benchmark
 Runs the long-form llama-benchy sweep used for spark-arena-style measurements.
 
 Usage:
@@ -79,26 +79,29 @@ def build_command(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run the full spark-arena-style llama-benchy sweep against the local GLM-5.3-Flash endpoint.",
+        description="Run the full spark-arena-style llama-benchy sweep against the local Cogni-Brain endpoint.",
         epilog="Example: uv run benchmark/benchmark_speed_arena.py --save-result benchmark/results_arena.csv",
     )
     parser.add_argument("--base-url", default="http://localhost:8000/v1")
-    parser.add_argument("--model", default="GLM-5.3-Flash")
-    parser.add_argument("--served-model-name", default="GLM-5.3-Flash")
-    parser.add_argument("--tokenizer", default="zai-org/GLM-5.3-Flash"  # HF text tokenizer, not the GGUF repo)
+    parser.add_argument("--model", default="Cogni-Brain")
+    parser.add_argument("--served-model-name", default="Cogni-Brain")
+    parser.add_argument(
+        "--tokenizer",
+        default="zai-org/GLM-5.3-Flash",  # HF text tokenizer
+    )
     parser.add_argument("--pp", type=int, default=2048)
     parser.add_argument("--tg", type=int, default=128)
     parser.add_argument(
         "--depth",
         nargs="+",
         type=int,
-        default=[0, 4096, 8192, 16384, 32768, 65535, 131072],
+        default=[0, 2048, 4096, 8192, 16384],
     )
-    parser.add_argument("--concurrency", nargs="+", type=int, default=[1, 2, 4, 8])
+    parser.add_argument("--concurrency", nargs="+", type=int, default=[1, 2])
     parser.add_argument("--save-result", default="benchmark/results_arena.csv")
     args = parser.parse_args()
 
-    header("FULL ARENA BENCHMARK - GLM-5.3-FLASH")
+    header("FULL ARENA BENCHMARK - COGNI-BRAIN (GLM-5.3-FLASH)")
     result_line("Timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     result_line("Base URL", args.base_url)
     result_line("Model", args.model)
@@ -110,7 +113,8 @@ def main():
     result_line("Concurrency", ", ".join(str(concurrency) for concurrency in args.concurrency))
     result_line("Output CSV", args.save_result)
     print()
-    print(f"  {c('This sweep can take several hours. Run it with only glm53-flash container active.', 'yellow')}")
+    print(f"  {c('This sweep benchmarks throughput across depths and concurrencies.', 'yellow')}")
+    print(f"  {c('Ensure spark-brain container is running with matching context headroom.', 'dim')}")
 
     if shutil.which("uv") is None:
         print(f"\n{c('uv is not installed or not on PATH', 'red')}")

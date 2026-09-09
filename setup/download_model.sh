@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# setup/download_model.sh - Download GLM-5.3-Flash split GGUF files
+# setup/download_model.sh - Download GLM-5.3-Flash split GGUF files for DGX Spark
+#
+# Available Quantizations & Memory Footprint on DGX Spark (128GB Unified Memory):
+#   - UD-IQ3_XXS: ~120.4 GB (3-bit; ~94% RAM; requires strict KV cache tuning)
+#   - UD-Q2_K_XL: ~108.7 GB (2-bit high-quality; ~85% RAM; leaves ~19 GB headroom)
+#   - UD-IQ2_XXS: ~101.8 GB (2-bit; ~79% RAM; recommended safe baseline with swap disabled)
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -8,33 +13,38 @@ QUANT="${QUANT:-UD-IQ3_XXS}"
 MODEL_DIR="${MODEL_DIR:-$REPO_DIR/models/$MODEL}"
 
 echo "================================================================="
-echo "=== Downloading GLM-5.3-Flash GGUF ==="
+echo "=== Downloading GLM-5.3-Flash GGUF Shards for DGX Spark ==="
 echo "================================================================="
-echo "  Model ID:   $MODEL"
-echo "  Quant:      $QUANT"
-echo "  Target dir: $MODEL_DIR"
-echo "  Expected:   ~120GB for UD-IQ3_XXS split GGUF"
+echo "  Hugging Face Repo: $MODEL"
+echo "  Quantization:      $QUANT"
+echo "  Target Directory:  $MODEL_DIR"
 echo
 
 mkdir -p "$MODEL_DIR"
 
-if find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | grep -q .; then
-  echo "Found existing $QUANT GGUF files:"
-  find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" | sed 's/^/  /'
+EXISTING_SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l || echo 0)
+if [ "$EXISTING_SHARDS" -ge 4 ]; then
+  echo "Found all $EXISTING_SHARDS existing $QUANT GGUF shards under $MODEL_DIR:"
+  find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" | sort | sed 's/^/  /'
+  echo
+  echo "Download already complete (idempotent exit)."
   exit 0
+elif [ "$EXISTING_SHARDS" -gt 0 ]; then
+  echo "Found partial download ($EXISTING_SHARDS shard(s)). Resuming download..."
 fi
 
+echo "Downloading $QUANT shards from $MODEL..."
 if command -v hf >/dev/null 2>&1; then
-  hf download "$MODEL" --local-dir "$MODEL_DIR" --include "*${QUANT}*"
+  hf download "$MODEL" --local-dir "$MODEL_DIR" --include "*${QUANT}*.gguf"
 elif command -v uvx >/dev/null 2>&1; then
-  uvx hf download "$MODEL" --local-dir "$MODEL_DIR" --include "*${QUANT}*"
+  uvx hf download "$MODEL" --local-dir "$MODEL_DIR" --include "*${QUANT}*.gguf"
 else
   echo "ERROR: Install huggingface_hub CLI or uvx first."
-  echo "Try: python3 -m pip install -U 'huggingface_hub[cli]'"
+  echo "Try: uv tool install huggingface_hub"
   exit 1
 fi
 
 echo
-echo "Download complete:"
-find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" | sed 's/^/  /'
-
+echo "Download verified:"
+find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" | sort | sed 's/^/  /'
+echo "================================================================="

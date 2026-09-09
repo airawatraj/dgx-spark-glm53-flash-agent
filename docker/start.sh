@@ -1,36 +1,84 @@
 #!/usr/bin/env bash
 # docker/start.sh — Start GLM-5.3-Flash llama-server on DGX Spark
-# Based on Unsloth docs: https://unsloth.ai/docs/models/glm-5.3-flash
+# Serves model as Cogni-Brain in container spark-brain.
 #
-# OOM-prevention knobs (override via env vars):
-#   CTX_SIZE        - token context window (default 16384; NOT 131072 on first boot)
-#   PARALLEL        - concurrent request slots (default 1; each slot costs ~KV cache)
-#   BATCH_SIZE      - max batch tokens for prompt processing (default 512)
-#   UBATCH          - micro-batch for CUDA kernel dispatch (default 256)
-#   MTP_DRAFT       - multi-token prediction draft steps; 0=off, 2=on (default 0)
-#   REASONING_EFFORT - "low" | "medium" | "high" | "max" (default "high")
+# Memory Architecture Notes (NVIDIA DGX Spark / Grace-Blackwell GB10):
+#   - Total Unified Memory: 128 GB (LPDDR5x shared CPU + GPU).
+#   - SWAP IS DISABLED on DGX Spark by default. Any allocation spike beyond 128GB
+#     causes immediate OOM kill of the llama-server process.
+#   - Static weights for UD-IQ3_XXS are ~120.37 GB (~94% of physical RAM).
+#   - Reserving >90% or pushing .95 memory fractions will fail.
+#   - KV Cache Quantization (q4_0 / q8_0) is enabled by default to save 2-4 GB.
+#   - Safe fallback quant: UD-IQ2_XXS (~101.8 GB) leaves 20+ GB headroom.
+#
+# Environment variables for tuning:
+#   CONTAINER        - Container name (default: spark-brain)
+#   PORT             - Host port (default: 8000)
+#   MODEL_ALIAS      - Served model name for OpenAI API (default: Cogni-Brain)
+#   QUANT            - Quantization profile (default: UD-IQ3_XXS; fallback: UD-IQ2_XXS)
+#   CTX_SIZE         - Token context window (default: 8192; max: 131072 with tuned KV)
+#   PARALLEL         - Concurrent request slots (default: 1)
+#   CACHE_TYPE_K     - KV cache K quantization: "f16" | "q8_0" | "q4_0" (default: q4_0)
+#   CACHE_TYPE_V     - KV cache V quantization: "f16" | "q8_0" | "q4_0" (default: q4_0)
+#   NGL              - Number of GPU layers to offload (default: 999 = all layers)
+#   BATCH_SIZE       - Max batch tokens for prompt processing (default: 512)
+#   UBATCH           - Micro-batch for CUDA kernel dispatch (default: 256)
+#   MTP_DRAFT        - Multi-token prediction draft steps; 0=off, 2=on (default: 0)
+#   REASONING_EFFORT - "low" | "high" | "max" (default: max)
+#   USE_MMAP         - 1=enable mmap (recommended with swap disabled), 0=no-mmap (default: 1)
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${IMAGE:-glm53-flash-dgx-spark:latest}"
-CONTAINER="${CONTAINER:-glm53-flash}"
+CONTAINER="${CONTAINER:-spark-brain}"
 MODEL="${MODEL:-unsloth/GLM-5.3-Flash-GGUF}"
 QUANT="${QUANT:-UD-IQ3_XXS}"
 MODEL_DIR="${MODEL_DIR:-$REPO_DIR/models/$MODEL}"
 PORT="${PORT:-8000}"
-MODEL_ALIAS="${MODEL_ALIAS:-GLM-5.3-Flash}"
+MODEL_ALIAS="${MODEL_ALIAS:-Cogni-Brain}"
 
-# ── OOM-prevention defaults ──────────────────────────────────────────────────
-# Start conservatively. Context 131072 will OOM on first boot with 120GB model.
-# Verify memory headroom with: bash docker/status.sh   (check nvidia-smi line)
-CTX_SIZE="${CTX_SIZE:-16384}"
+# ── Memory & Safety Tuning Defaults (DGX Spark) ──────────────────────────────
+CTX_SIZE="${CTX_SIZE:-8192}"
 PARALLEL="${PARALLEL:-1}"
+CACHE_TYPE_K="${CACHE_TYPE_K:-q4_0}"
+CACHE_TYPE_V="${CACHE_TYPE_V:-q4_0}"
+NGL="${NGL:-999}"
 BATCH_SIZE="${BATCH_SIZE:-512}"
 UBATCH="${UBATCH:-256}"
 MTP_DRAFT="${MTP_DRAFT:-0}"
-REASONING_EFFORT="${REASONING_EFFORT:-high}"
+REASONING_EFFORT="${REASONING_EFFORT:-max}"
+USE_MMAP="${USE_MMAP:-1}"
 # ─────────────────────────────────────────────────────────────────────────────
 
+echo "================================================================="
+echo "=== Starting Cogni-Brain (GLM-5.3-Flash) on DGX Spark ==="
+echo "================================================================="
+echo "  Container:         $CONTAINER"
+echo "  Served Model:      $MODEL_ALIAS"
+echo "  Quantization:      $QUANT"
+echo "  Context Size:      $CTX_SIZE tokens"
+echo "  Parallel Slots:    $PARALLEL"
+echo "  KV Cache Quant:    K=$CACHE_TYPE_K, V=$CACHE_TYPE_V"
+echo "  GPU Offload:       -ngl $NGL (GB10 Grace-Blackwell)"
+echo "  Batch / Micro:     $BATCH_SIZE / $UBATCH"
+echo "  MTP Draft:         ${MTP_DRAFT:-off}"
+echo "  Reasoning Effort:  $REASONING_EFFORT"
+echo "  MMAP:              $([ "$USE_MMAP" -eq 1 ] && echo 'enabled (safe)' || echo 'disabled (--no-mmap)')"
+echo
+
+# Memory preflight check
+if command -v free >/dev/null 2>&1; then
+  AVAIL_MB=$(free -m | awk '/^Mem:/ {print $7}')
+  echo "  Host Available RAM: ${AVAIL_MB} MB"
+  if [ "$QUANT" = "UD-IQ3_XXS" ] && [ "$AVAIL_MB" -lt 122000 ]; then
+    echo "  WARNING: Available memory (${AVAIL_MB} MB) is tight for UD-IQ3_XXS (~120GB)."
+    echo "  Note: Swap is disabled on DGX Spark. If OOM occurs, switch to:"
+    echo "    QUANT=UD-IQ2_XXS bash docker/start.sh"
+    echo
+  fi
+fi
+
+# Locate GGUF shard 1
 MODEL_FILE="$(find "$MODEL_DIR" -type f \( -name "*${QUANT}*00001*.gguf" -o -name "*${QUANT}*.gguf" \) 2>/dev/null | sort | head -1)"
 if [ -z "$MODEL_FILE" ]; then
   echo "ERROR: Could not find $QUANT GGUF under $MODEL_DIR"
@@ -38,19 +86,29 @@ if [ -z "$MODEL_FILE" ]; then
   exit 1
 fi
 MODEL_REL="${MODEL_FILE#$MODEL_DIR/}"
+echo "  Found model file:  $MODEL_REL"
 
+# Verify image
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "Docker image $IMAGE not found. Building..."
   bash docker/build.sh
 fi
 
+# Idempotent cleanup of existing container(s)
+echo "Cleaning up any existing container ($CONTAINER, glm53-flash)..."
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+docker rm -f glm53-flash >/dev/null 2>&1 || true
 
 EXTRA_ARGS=()
 if [ "${MTP_DRAFT}" -gt 0 ]; then
   EXTRA_ARGS+=(--draft-max "${MTP_DRAFT}")
 fi
 
+if [ "${USE_MMAP}" -eq 0 ]; then
+  EXTRA_ARGS+=(--no-mmap)
+fi
+
+echo "Starting $CONTAINER on port $PORT..."
 docker run -d \
   --name "$CONTAINER" \
   --gpus all \
@@ -64,25 +122,25 @@ docker run -d \
   --alias "$MODEL_ALIAS" \
   --host 0.0.0.0 \
   --port 8000 \
+  --n-gpu-layers "$NGL" \
   --ctx-size "$CTX_SIZE" \
   --parallel "$PARALLEL" \
+  --cache-type-k "$CACHE_TYPE_K" \
+  --cache-type-v "$CACHE_TYPE_V" \
   --batch-size "$BATCH_SIZE" \
   --ubatch-size "$UBATCH" \
-  --no-mmap \
   --temp 1.0 \
   --top-p 0.95 \
   --chat-template-kwargs "{\"reasoning_effort\":\"${REASONING_EFFORT}\"}" \
   "${EXTRA_ARGS[@]}"
 
+echo
 echo "================================================================="
-echo "Started $CONTAINER on http://localhost:$PORT"
-echo "  Model:            $MODEL_ALIAS ($QUANT)"
-echo "  CTX:              $CTX_SIZE tokens"
-echo "  Parallel:         $PARALLEL slot(s)"
-echo "  Batch:            $BATCH_SIZE / ubatch $UBATCH"
-echo "  MTP draft:        ${MTP_DRAFT:-off}"
-echo "  Reasoning effort: $REASONING_EFFORT"
-echo ""
-echo "Check memory:  bash docker/status.sh"
-echo "Logs:          docker logs -f $CONTAINER"
+echo "✓ Container $CONTAINER started successfully."
+echo "  Endpoint:     http://localhost:$PORT/v1"
+echo "  Served Model: $MODEL_ALIAS"
+echo
+echo "Check status:   bash docker/status.sh"
+echo "Follow logs:    docker logs -f $CONTAINER"
+echo "Run smoke test: bash benchmark/smoke_test.sh localhost:$PORT"
 echo "================================================================="

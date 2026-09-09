@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # ///
 """
-Run tool-eval-bench against the local GLM-5.3-Flash OpenAI-compatible endpoint.
+Run tool-eval-bench against the local Cogni-Brain (GLM-5.3-Flash) endpoint.
 
 Usage:
   uv run benchmark/benchmark_smarts.py
@@ -27,6 +27,8 @@ def build_command(args):
         "tool-eval-bench",
         "--base-url",
         args.base_url,
+        "--model",
+        args.model,
     ]
     if args.mode == "short":
         command.append("--short")
@@ -38,18 +40,20 @@ def build_command(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="GLM-5.3-Flash tool-eval benchmark")
+    parser = argparse.ArgumentParser(description="Cogni-Brain (GLM-5.3-Flash) tool-eval benchmark")
     parser.add_argument("--base-url", default="http://localhost:8000/v1")
+    parser.add_argument("--model", default="Cogni-Brain")
     parser.add_argument("--mode", choices=["short", "perf", "trials"], default="short")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--trials", type=int, default=3)
     args = parser.parse_args()
 
     print("=" * 72)
-    print("GLM-5.3-Flash Smarts / Tool Eval")
+    print(f"Cogni-Brain (GLM-5.3-Flash) Tool Eval Benchmark ({args.mode})")
     print("=" * 72)
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Base URL:  {args.base_url}")
+    print(f"Model:     {args.model}")
     print(f"Mode:      {args.mode}")
 
     if shutil.which("uv") is None:
@@ -66,4 +70,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

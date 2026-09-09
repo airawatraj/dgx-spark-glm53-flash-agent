@@ -46,7 +46,8 @@ COHERENCE_RESP=$(curl -s -m 120 "$BASE/v1/chat/completions" \
     \"model\": \"$MODEL\",
     \"messages\": [{\"role\": \"user\", \"content\": \"The capital of France is\"}],
     \"temperature\": 0,
-    \"max_tokens\": 32
+    \"max_tokens\": 32,
+    \"cache_prompt\": false
   }")
 
 echo "$COHERENCE_RESP" | python3 -c '
@@ -80,6 +81,7 @@ payload = json.dumps({
     "messages": [{"role": "user", "content": prompt}],
     "max_tokens": 1,
     "temperature": 0.0,
+    "cache_prompt": False,
 }).encode("utf-8")
 req = urllib.request.Request(
     f"{base}/v1/chat/completions",
@@ -113,6 +115,7 @@ payload = json.dumps({
     "messages": [{"role": "user", "content": "Explain unified memory in three sentences."}],
     "max_tokens": 128,
     "temperature": 0.0,
+    "cache_prompt": False,
 }).encode("utf-8")
 req = urllib.request.Request(
     f"{base}/v1/chat/completions",

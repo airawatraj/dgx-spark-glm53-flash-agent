@@ -64,6 +64,7 @@ def stream_chat(host, port, model, prompt, max_tokens=256, reasoning_effort="max
         "max_tokens": max_tokens,
         "stream": True,
         "chat_template_kwargs": {"reasoning_effort": reasoning_effort},
+        "cache_prompt": False,
     }
 
     t_start = time.perf_counter()

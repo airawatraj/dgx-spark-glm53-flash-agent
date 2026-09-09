@@ -66,7 +66,7 @@ def build_command(args):
         "--tg",
         str(args.tg),
         "--extra-body",
-        "return_token_ids=false",
+        "return_token_ids=false,cache_prompt=false",
         "--save-result",
         args.save_result,
         "--depth",

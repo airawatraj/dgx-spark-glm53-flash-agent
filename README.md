@@ -8,11 +8,11 @@
 ![Hardware](https://img.shields.io/badge/hardware-NVIDIA%20DGX%20Spark-brightgreen?logo=nvidia&logoColor=white)
 ![Memory](https://img.shields.io/badge/unified%20memory-128GB%20%28swap%20disabled%29-purple)
 ![Quantization](https://img.shields.io/badge/quantization-UD--IQ3__XXS%20%2F%20UD--IQ2__XXS-blueviolet)
-![Context](https://img.shields.io/badge/context-1M%20max-lightgrey)
+![Context](https://img.shields.io/badge/context-8K%20default%20(up%20to%2032K)-blue)
 
 This repository documents running and benchmarking [unsloth/GLM-5.3-Flash-GGUF](https://huggingface.co/unsloth/GLM-5.3-Flash-GGUF) on a single **NVIDIA DGX Spark / GB10** (128 GB unified memory), served as **`Cogni-Brain`** inside container **`spark-brain`**.
 
-GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active multimodal MoE model with linear/sparse hybrid attention and a maximum context window of `1,048,576` tokens.
+GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active multimodal MoE model with linear/sparse hybrid attention. While the upstream model architecture supports up to 1M tokens in cluster environments, on a single DGX Spark (128 GB Unified Memory, swap disabled) with a 102–120 GB model footprint, context is configured to **8,192 tokens by default** (scaling up to **32,768 tokens** under `UD-IQ2_XXS` with quantized KV cache) to guarantee zero OOM risk.
 
 > ⚠️ **Personal workstation benchmark harness. Not for enterprise use. Use at your own risk.**
 
@@ -25,10 +25,11 @@ GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active
 | **Served Model Name** | `Cogni-Brain` | OpenAI-compatible endpoint alias |
 | **Docker Container** | `spark-brain` | Lifecycle managed via `docker/*.sh` |
 | **Port** | `8000` | Exposed at `http://localhost:8000/v1` |
-| **Runtime** | Unsloth `llama.cpp` (`glm5next/upstream`) | Native Grace-Blackwell SM 12.1 CUDA build |
-| **Primary Quant** | `UD-IQ3_XXS` (~120.37 GB) | 3-bit GGUF (documented ~120GB) |
-| **Safe Fallback Quant** | `UD-IQ2_XXS` (~101.84 GB) | 2-bit GGUF (recommended if host memory is constrained) |
-| **KV Cache Quantization** | `q4_0` / `q8_0` | Default: `q4_0` (reduces KV memory footprint) |
+| **Runtime** | Unsloth `llama.cpp` (`glm5next/upstream`) | Native Grace-Blackwell SM 120 CUDA build |
+| **Primary Quant** | `UD-IQ3_XXS` (~120.37 GB) | 3-bit GGUF (single-slot benchmark profile) |
+| **Safe Fallback Quant** | `UD-IQ2_XXS` (~101.84 GB) | 2-bit GGUF (recommended daily baseline; ~20 GB free) |
+| **Context Window (DGX Spark)** | `8,192` default (up to `32,768`) | Sized to fit 128 GB unified memory budget without swap |
+| **KV Cache Quantization** | `q4_0` / `q8_0` | Default: `q4_0` (preserves memory headroom) |
 | **Hardware** | NVIDIA DGX Spark / GB10 | Grace-Blackwell ARM + Blackwell GPU, 128GB Unified Memory |
 | **Swap Status** | **Disabled** | Host memory allocations must remain strictly within 128 GB |
 | **Sampling Defaults** | `temperature=1.0`, `top_p=0.95` | Task default; DeepSWE: `temp=0.95`, `top_p=1.0` |

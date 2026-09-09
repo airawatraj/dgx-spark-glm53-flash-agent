@@ -1,0 +1,16 @@
+# Exclude large weights and local files from Docker build context
+models/
+*.gguf
+.git/
+.gitignore
+.dockerignore
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+assets/
+benchmark/*.json
+benchmark/*.csv
+scratch/

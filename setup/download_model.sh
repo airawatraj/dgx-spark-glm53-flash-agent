@@ -24,14 +24,19 @@ mkdir -p "$MODEL_DIR"
 
 EXISTING_SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l | tr -d '[:space:]')
 EXISTING_SHARDS="${EXISTING_SHARDS:-0}"
-if [ "$EXISTING_SHARDS" -ge 4 ]; then
-  echo "Found all $EXISTING_SHARDS existing $QUANT GGUF shards under $MODEL_DIR:"
+EXPECTED_SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | grep -o -E -- '-of-[0-9]+' | head -n 1 | sed 's/-of-0*//' || true)
+EXPECTED_SHARDS="${EXPECTED_SHARDS:-0}"
+
+if [ "$EXISTING_SHARDS" -gt 0 ] && [ "$EXPECTED_SHARDS" -gt 0 ] && [ "$EXISTING_SHARDS" -ge "$EXPECTED_SHARDS" ]; then
+  echo "Found all $EXISTING_SHARDS/$EXPECTED_SHARDS existing $QUANT GGUF shards under $MODEL_DIR:"
   find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" | sort | sed 's/^/  /'
   echo
   echo "Download already complete (idempotent exit)."
   exit 0
 elif [ "$EXISTING_SHARDS" -gt 0 ]; then
-  echo "Found partial download ($EXISTING_SHARDS shard(s)). Resuming download..."
+  TOTAL_DISP="${EXPECTED_SHARDS}"
+  [ "$TOTAL_DISP" -eq 0 ] && TOTAL_DISP="?"
+  echo "Found partial download ($EXISTING_SHARDS/$TOTAL_DISP shard(s)). Resuming download..."
 fi
 
 echo "Downloading $QUANT shards from $MODEL..."

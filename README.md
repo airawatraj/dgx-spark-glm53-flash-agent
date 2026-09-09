@@ -58,7 +58,7 @@ QUANT=UD-IQ2_XXS bash setup/download_model.sh
 ```
 
 ### 3. Build Docker Image
-Build the CUDA container with native Grace-Blackwell (`sm_121a` / `120;121`) support:
+Build the CUDA container with native Grace-Blackwell (SM 120 / Blackwell GB10) support:
 
 ```bash
 bash docker/build.sh
@@ -68,11 +68,11 @@ bash docker/build.sh
 Launches `llama-server` in container `spark-brain`:
 
 ```bash
-# Launch with primary UD-IQ3_XXS profile:
-bash docker/start.sh
-
-# Or launch with UD-IQ2_XXS fallback:
+# Recommended daily driver baseline (~102 GB, ~20 GB free headroom, supports PARALLEL=2):
 QUANT=UD-IQ2_XXS bash docker/start.sh
+
+# Or launch with max-fidelity 3-bit profile (~120 GB, tight headroom, single-slot only):
+bash docker/start.sh
 ```
 
 Container management:
@@ -104,9 +104,12 @@ uv run benchmark/benchmark_smarts.py
 
 ## Operational Guidelines (DGX Spark)
 
-- **Memory Headroom & Disabled Swap**: DGX Spark operates without swap by default. Any memory allocation spike exceeding 128 GB triggers an immediate kernel OOM kill. Pushing `.95` memory fractions will fail in practice because host processes (OS, Docker, NVIDIA UVM drivers, display) consume ~5–7 GB.
-- **KV Cache Quantization**: `docker/start.sh` passes `--cache-type-k q4_0 --cache-type-v q4_0` by default to conserve memory headroom.
-- **Quantization Fallback**: `UD-IQ3_XXS` weighs ~120.37 GB. If host overhead leaves insufficient headroom, use `UD-IQ2_XXS` (~101.8 GB) which provides ~21 GB of safe breathing room.
+- **Memory Profiles & Disabled Swap**: DGX Spark runs with swap disabled by default. Allocations exceeding physical RAM trigger an immediate kernel OOM kill. Host overhead (OS, Docker, NVIDIA UVM drivers) consumes ~5–7 GB.
+  - **`UD-IQ2_XXS` (~101.8 GB static)**: Recommended production baseline. Leaves ~20 GB headroom for KV cache and supports true multi-slot serving (`PARALLEL=2`).
+  - **`UD-IQ3_XXS` (~120.4 GB static)**: High-fidelity benchmark profile. Leaves ~2 GB physical RAM headroom; strictly requires single-slot (`PARALLEL=1`).
+- **Parallel Concurrency vs Queueing**: `docker/start.sh` defaults to `--parallel 1` to protect unified memory. When running concurrency tests in `benchmark/benchmark_speed.py`, requests are queued unless started with multi-slot serving: `QUANT=UD-IQ2_XXS PARALLEL=2 bash docker/start.sh`.
+- **Linear Attention / Recurrent Safeguards**: GLM-5.3-Flash uses hybrid linear attention with recurrent compressor states. `docker/start.sh` enforces `--no-cache-prompt`, `--cache-reuse 0`, `--no-context-shift`, and `--slot-prompt-similarity 1.1` to prevent recurrent state mismatch errors across queries.
+- **KV Cache Quantization**: `docker/start.sh` passes `--cache-type-k q4_0 --cache-type-v q4_0` by default to preserve unified memory headroom.
 - **Sampling Defaults**: Documented task default is `temperature=1.0`, `top_p=0.95`.
 - **Reasoning Modes**: Supports `low`, `high`, and `max`. Default is `max`.
 

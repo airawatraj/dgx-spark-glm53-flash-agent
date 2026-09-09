@@ -76,6 +76,12 @@ if command -v free >/dev/null 2>&1; then
     echo "    QUANT=UD-IQ2_XXS bash docker/start.sh"
     echo
   fi
+  if [ "$PARALLEL" -gt 1 ] && [ "$QUANT" = "UD-IQ3_XXS" ]; then
+    echo "  WARNING: Running PARALLEL=$PARALLEL with UD-IQ3_XXS exceeds safe 128GB headroom."
+    echo "  For multi-slot parallel serving, use:"
+    echo "    QUANT=UD-IQ2_XXS PARALLEL=$PARALLEL bash docker/start.sh"
+    echo
+  fi
 fi
 
 # Locate GGUF shard 1

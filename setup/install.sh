@@ -75,14 +75,23 @@ fi
 echo
 echo "[6/6] Checking downloaded model files..."
 SHARDS=0
+EXPECTED_SHARDS=0
 if [ -d "$MODEL_DIR" ]; then
   SHARDS=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | wc -l | tr -d '[:space:]')
+  TOTAL_FROM_NAME=$(find "$MODEL_DIR" -type f -name "*${QUANT}*.gguf" 2>/dev/null | grep -o -E -- '-of-[0-9]+' | head -n 1 | sed 's/-of-0*//' || true)
+  if [ -n "$TOTAL_FROM_NAME" ]; then
+    EXPECTED_SHARDS="$TOTAL_FROM_NAME"
+  fi
 fi
 SHARDS="${SHARDS:-0}"
-if [ "$SHARDS" -ge 4 ]; then
-  echo "  Found $SHARDS GGUF shards under $MODEL_DIR"
+EXPECTED_SHARDS="${EXPECTED_SHARDS:-0}"
+
+if [ "$SHARDS" -gt 0 ] && [ "$EXPECTED_SHARDS" -gt 0 ] && [ "$SHARDS" -ge "$EXPECTED_SHARDS" ]; then
+  echo "  Found all $SHARDS/$EXPECTED_SHARDS GGUF shards under $MODEL_DIR"
 elif [ "$SHARDS" -gt 0 ]; then
-  echo "  Found partial shards ($SHARDS/4). Run download to complete:"
+  TOTAL_DISP="${EXPECTED_SHARDS}"
+  [ "$TOTAL_DISP" -eq 0 ] && TOTAL_DISP="?"
+  echo "  Found partial shards ($SHARDS/$TOTAL_DISP). Run download to complete:"
   echo "    bash setup/download_model.sh"
 else
   echo "  Model files not found yet. Download with:"

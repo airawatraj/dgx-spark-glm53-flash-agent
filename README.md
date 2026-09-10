@@ -97,8 +97,11 @@ uv run benchmark/benchmark_speed.py
 
 # 2. Agentic tool calling benchmark (tool-eval-bench):
 uv run benchmark/benchmark_smarts.py
+```
 
-# 3. Full Spark Arena / llama-benchy multi-depth sweep (run in tmux):
+**3. Full Spark Arena sweep** — always run inside `tmux` (~35–50 min):
+
+```bash
 tmux new -s arena
 uv run benchmark/benchmark_speed_arena.py --save-result benchmark/results_arena.csv
 # Detach session: Ctrl+b, then d

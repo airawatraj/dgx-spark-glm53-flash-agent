@@ -26,8 +26,8 @@ GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active
 | **Docker Container** | `spark-brain` | Lifecycle managed via `docker/*.sh` |
 | **Port** | `8000` | Exposed at `http://localhost:8000/v1` |
 | **Runtime** | Unsloth `llama.cpp` (`glm5next/upstream`) | Native Grace-Blackwell SM 121 (`121a`) CUDA 13 build |
-| **Primary Quant** | `UD-IQ3_XXS` (~120.37 GB) | 3-bit GGUF (single-slot benchmark profile) |
-| **Safe Fallback Quant** | `UD-IQ2_XXS` (~101.84 GB) | 2-bit GGUF (recommended daily baseline; ~20 GB free) |
+| **Recommended Baseline Quant** | `UD-IQ2_XXS` (~101.84 GB) | 2-bit GGUF (recommended daily driver; ~20 GB free headroom) |
+| **High-Fidelity Benchmark Quant** | `UD-IQ3_XXS` (~120.37 GB) | 3-bit GGUF (single-slot benchmark profile; ~2 GB free headroom) |
 | **Context Window (DGX Spark)** | `32,768` (32K) default | Sized to fit 128 GB unified memory budget with `q4_0` KV cache |
 | **KV Cache Quantization** | `q4_0` / `q8_0` | Default: `q4_0` (preserves memory headroom) |
 | **Hardware** | NVIDIA DGX Spark / GB10 | Grace-Blackwell ARM + Blackwell GPU, 128GB Unified Memory |
@@ -51,11 +51,11 @@ bash setup/install.sh
 Download split GGUF shards into `models/unsloth/GLM-5.3-Flash-GGUF`:
 
 ```bash
-# Primary 3-bit profile (~120GB):
+# Recommended daily driver baseline (~102GB, leaves ~20GB headroom):
 bash setup/download_model.sh
 
-# Or 2-bit profile (~102GB, recommended if host RAM headroom is tight):
-QUANT=UD-IQ2_XXS bash setup/download_model.sh
+# Or download high-fidelity 3-bit profile (~120GB, single-slot only):
+QUANT=UD-IQ3_XXS bash setup/download_model.sh
 ```
 
 ### 3. Build Docker Image
@@ -70,11 +70,11 @@ bash docker/build.sh --no-cache
 Launches `llama-server` in container `spark-brain`:
 
 ```bash
-# Recommended daily driver baseline (~102 GB, ~20 GB free headroom, supports PARALLEL=2):
-QUANT=UD-IQ2_XXS bash docker/start.sh
+# Default daily driver baseline (~102 GB, ~20 GB free headroom, 32K context):
+bash docker/start.sh
 
 # Or launch with max-fidelity 3-bit profile (~120 GB, tight headroom, single-slot only):
-bash docker/start.sh
+QUANT=UD-IQ3_XXS bash docker/start.sh
 ```
 
 Container management & verification:

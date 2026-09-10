@@ -4,8 +4,18 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL="${MODEL:-unsloth/GLM-5.3-Flash-GGUF}"
-QUANT="${QUANT:-UD-IQ3_XXS}"
 MODEL_DIR="${MODEL_DIR:-$REPO_DIR/models/$MODEL}"
+
+# Detect existing download or default to UD-IQ2_XXS
+if [ -z "${QUANT:-}" ]; then
+  if find "$MODEL_DIR" -type f -name "*UD-IQ2_XXS*.gguf" 2>/dev/null | grep -q .; then
+    QUANT="UD-IQ2_XXS"
+  elif find "$MODEL_DIR" -type f -name "*UD-IQ3_XXS*.gguf" 2>/dev/null | grep -q .; then
+    QUANT="UD-IQ3_XXS"
+  else
+    QUANT="UD-IQ2_XXS"
+  fi
+fi
 
 echo "================================================================="
 echo "=== DGX Spark Cogni-Brain (GLM-5.3-Flash) Preflight ==="

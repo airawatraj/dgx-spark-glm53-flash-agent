@@ -15,7 +15,7 @@
 #   CONTAINER        - Container name (default: spark-brain)
 #   PORT             - Host port (default: 8000)
 #   MODEL_ALIAS      - Served model name for OpenAI API (default: Cogni-Brain)
-#   QUANT            - Quantization profile (default: UD-IQ3_XXS; fallback: UD-IQ2_XXS)
+#   QUANT            - Quantization profile (default: auto-detected / UD-IQ2_XXS; optional: UD-IQ3_XXS)
 #   CTX_SIZE         - Token context window (default: 32768; max: 131072 with tuned KV)
 #   PARALLEL         - Concurrent request slots (default: 1)
 #   CACHE_TYPE_K     - KV cache K quantization: "f16" | "q8_0" | "q4_0" (default: q4_0)
@@ -32,10 +32,20 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${IMAGE:-glm53-flash-dgx-spark:latest}"
 CONTAINER="${CONTAINER:-spark-brain}"
 MODEL="${MODEL:-unsloth/GLM-5.3-Flash-GGUF}"
-QUANT="${QUANT:-UD-IQ3_XXS}"
 MODEL_DIR="${MODEL_DIR:-$REPO_DIR/models/$MODEL}"
 PORT="${PORT:-8000}"
 MODEL_ALIAS="${MODEL_ALIAS:-Cogni-Brain}"
+
+# Detect existing download or default to UD-IQ2_XXS (safe 102GB baseline)
+if [ -z "${QUANT:-}" ]; then
+  if find "$MODEL_DIR" -type f -name "*UD-IQ2_XXS*.gguf" 2>/dev/null | grep -q .; then
+    QUANT="UD-IQ2_XXS"
+  elif find "$MODEL_DIR" -type f -name "*UD-IQ3_XXS*.gguf" 2>/dev/null | grep -q .; then
+    QUANT="UD-IQ3_XXS"
+  else
+    QUANT="UD-IQ2_XXS"
+  fi
+fi
 
 # ── Memory & Safety Tuning Defaults (DGX Spark) ──────────────────────────────
 CTX_SIZE="${CTX_SIZE:-32768}"

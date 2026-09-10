@@ -2,14 +2,14 @@
 # setup/download_model.sh - Download GLM-5.3-Flash split GGUF files for DGX Spark
 #
 # Available Quantizations & Memory Footprint on DGX Spark (128GB Unified Memory):
-#   - UD-IQ3_XXS: ~120.4 GB (3-bit; ~94% RAM; requires strict KV cache tuning)
+#   - UD-IQ2_XXS: ~101.8 GB (2-bit; ~79% RAM; default safe baseline with swap disabled)
 #   - UD-Q2_K_XL: ~108.7 GB (2-bit high-quality; ~85% RAM; leaves ~19 GB headroom)
-#   - UD-IQ2_XXS: ~101.8 GB (2-bit; ~79% RAM; recommended safe baseline with swap disabled)
+#   - UD-IQ3_XXS: ~120.4 GB (3-bit; ~94% RAM; single-slot benchmark profile)
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL="${MODEL:-unsloth/GLM-5.3-Flash-GGUF}"
-QUANT="${QUANT:-UD-IQ3_XXS}"
+QUANT="${QUANT:-UD-IQ2_XXS}"
 MODEL_DIR="${MODEL_DIR:-$REPO_DIR/models/$MODEL}"
 
 echo "================================================================="

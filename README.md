@@ -98,8 +98,11 @@ uv run benchmark/benchmark_speed.py
 # 2. Agentic tool calling benchmark (tool-eval-bench):
 uv run benchmark/benchmark_smarts.py
 
-# 3. Full Spark Arena / llama-benchy multi-depth sweep (long-running):
-uv run benchmark/benchmark_speed_arena.py
+# 3. Full Spark Arena / llama-benchy multi-depth sweep (run in tmux):
+tmux new -s arena
+uv run benchmark/benchmark_speed_arena.py --save-result benchmark/results_arena.csv
+# Detach session: Ctrl+b, then d
+# Re-attach anytime to monitor: tmux attach -t arena
 ```
 
 ---
@@ -159,7 +162,23 @@ Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selec
 
 ### 3. Full Spark Arena Context Sweep (`benchmark/benchmark_speed_arena.py`)
 
-Runs the long-form `llama-benchy` matrix across prompt prefill depths (0, 2048, 4096, 8192, 16384) and concurrencies (1, 2). Results are saved to `benchmark/results_arena.csv`.
+Runs the long-form `llama-benchy` matrix across prompt prefill depths (0, 2048, 4096, 8192, 16384) and concurrencies (1, 2) for submission to [spark-arena.com](https://spark-arena.com). Because this full multi-depth sweep takes ~25–35 minutes, run it in a detached `tmux` session on your DGX Spark:
+
+```bash
+# 1. Start a persistent tmux session:
+tmux new -s arena
+
+# 2. Launch the arena sweep and write results to CSV:
+uv run benchmark/benchmark_speed_arena.py --save-result benchmark/results_arena.csv
+
+# 3. Detach from the session to let it run in background:
+#    Press: Ctrl+b, then d
+
+# 4. Check status and monitor real-time output anytime:
+tmux attach -t arena
+```
+
+Results are saved to `benchmark/results_arena.csv` formatted for direct submission to Spark Arena.
 
 ---
 

@@ -127,11 +127,13 @@ The benchmarks below were collected directly on a single **NVIDIA DGX Spark / GB
 |---|:---:|---|---|
 | **Smoke Test: TTFT & Prefill** | ~1,113 tokens | **223 tok/s** (TTFT: 4,995 ms) | 1,113 tokens prefilled in 5.00s |
 | **Smoke Test: Single-Stream Decode** | 128 tokens | **14.6 tok/s** | 128 tokens decoded in 8.78s |
-| **Baseline Single-Stream Decode** | 256 tokens | **15.7 tok/s** (Peak: **15.9 tok/s**) | 3-run avg, TTFT: **695 ms** (256 reasoning chunks) |
-| **Concurrency: 1 Stream** | 256 tokens | **15.3 aggregate tok/s** | 1/1 OK in 16.8s |
-| **Concurrency: 2 Streams** | 256 tokens | **15.0 aggregate tok/s** | 2/2 OK in 34.0s (queued under single-slot) |
-| **Context Scaling: ~1,024 Tokens** | ~1,024 tokens | **15.6 tok/s** (TTFT: 5,797 ms) | 64 tokens generated in 9.9s |
-| **Context Scaling: ~4,096 Tokens** | ~4,096 tokens | **15.4 tok/s** (TTFT: 18,386 ms) | 64 tokens generated in 22.5s |
+| **Baseline Single-Stream Decode** | 256 tokens | **18.7 tok/s** (Peak: **18.8 tok/s**) | 3-run avg, TTFT: **707 ms** (256 reasoning chunks) |
+| **Concurrency: 1 Stream** | 256 tokens | **17.9 aggregate tok/s** | 1/1 OK in 14.3s |
+| **Concurrency: 2 Streams** | 256 tokens | **17.8 aggregate tok/s** | 2/2 OK in 28.7s (queued under single-slot) |
+| **Context Scaling: ~1,024 Tokens** | ~1,024 tokens | **18.7 tok/s** (TTFT: 4,110 ms) | 64 tokens generated in 7.5s |
+| **Context Scaling: ~4,096 Tokens** | ~4,096 tokens | **18.4 tok/s** (TTFT: 14,536 ms) | 64 tokens generated in 18.0s |
+| **Context Scaling: ~8,192 Tokens** | ~8,192 tokens | **18.1 tok/s** (TTFT: 26,103 ms) | 64 tokens generated in 29.6s |
+| **Context Scaling: ~16,384 Tokens** | ~16,384 tokens | **17.5 tok/s** (TTFT: 47,659 ms) | 64 tokens generated in 51.3s |
 
 ![Cogni-Brain Speed Benchmark](assets/benchmark_speed.png)
 

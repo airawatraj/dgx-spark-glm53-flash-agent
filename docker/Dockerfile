@@ -20,7 +20,7 @@ RUN git clone --branch "${LLAMA_BRANCH}" "${LLAMA_REPO}" llama.cpp \
   && cmake llama.cpp -B llama.cpp/build \
        -DBUILD_SHARED_LIBS=OFF \
        -DGGML_CUDA=ON \
-       -DCMAKE_CUDA_ARCHITECTURES="121a" \
+       -DCMAKE_CUDA_ARCHITECTURES="121" \
   && cmake --build llama.cpp/build --config Release -j --clean-first \
        --target llama-cli llama-mtmd-cli llama-server llama-gguf-split
 

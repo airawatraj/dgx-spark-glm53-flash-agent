@@ -180,6 +180,8 @@ tmux attach -t arena
 
 Results are saved to `benchmark/results_arena.csv` formatted for direct submission to Spark Arena.
 
+> 🧪 **Frontier Experiments & 64K Scaling**: For detailed memory profiling, theoretical scaling limits, and instructions to push the context window up to **64K tokens (`65,536`)**, see [EXPERIMENTS.md](EXPERIMENTS.md).
+
 ---
 
 ## OpenAI-Compatible API Usage
@@ -204,6 +206,7 @@ curl http://localhost:8000/v1/chat/completions \
 ## Repository Layout
 
 ```text
+EXPERIMENTS.md  Frontier benchmarks, 64K context push, and memory profiling
 assets/         Benchmark screenshots and performance charts
 benchmark/      Speed, Spark Arena sweep, smarts/tool-eval, and smoke test
 docker/         Dockerfile (SM 12.1), build, start, status, and stop helpers

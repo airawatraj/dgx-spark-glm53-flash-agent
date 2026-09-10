@@ -3,16 +3,16 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![Base Model](https://img.shields.io/badge/base%20model-GLM--5.3--Flash%20%28ox--alpha%29-limegreen)
 ![Served Model](https://img.shields.io/badge/served%20model-Cogni--Brain-brightgreen)
-![Container](https://img.shields.io/badge/container-spark--brain-blue)
-![Runtime](https://img.shields.io/badge/runtime-llama.cpp%20%2B%20GGUF-orange)
+![Runtime](https://img.shields.io/badge/runtime-llama.cpp%20%28SM%20121a%29-orange)
 ![Hardware](https://img.shields.io/badge/hardware-NVIDIA%20DGX%20Spark-brightgreen?logo=nvidia&logoColor=white)
-![Memory](https://img.shields.io/badge/unified%20memory-128GB%20%28swap%20disabled%29-purple)
-![Quantization](https://img.shields.io/badge/quantization-UD--IQ3__XXS%20%2F%20UD--IQ2__XXS-blueviolet)
-![Context](https://img.shields.io/badge/context-8K%20default%20(up%20to%2032K)-blue)
+![Tool Eval](https://img.shields.io/badge/tool--eval-100%2F100%20%2815%2F15%20PASS%29-success)
+![Decode Speed](https://img.shields.io/badge/decode-18.7%20tok%2Fs-brightgreen)
+![Quantization](https://img.shields.io/badge/quantization-UD--IQ2__XXS-blueviolet)
+![Context](https://img.shields.io/badge/context-32K-blue)
 
 This repository documents running and benchmarking [unsloth/GLM-5.3-Flash-GGUF](https://huggingface.co/unsloth/GLM-5.3-Flash-GGUF) on a single **NVIDIA DGX Spark / GB10** (128 GB unified memory), served as **`Cogni-Brain`** inside container **`spark-brain`**.
 
-GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active multimodal MoE model with linear/sparse hybrid attention. While the upstream model architecture supports up to 1M tokens in cluster environments, on a single DGX Spark (128 GB Unified Memory, swap disabled) with a 102–120 GB model footprint, context is configured to **8,192 tokens by default** (scaling up to **32,768 tokens** under `UD-IQ2_XXS` with quantized KV cache) to guarantee zero OOM risk.
+GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active multimodal MoE model with linear/sparse hybrid attention. While the upstream model architecture supports up to 1M tokens in cluster environments, on a single DGX Spark (128 GB Unified Memory, swap disabled) with a 102 GB model footprint (`UD-IQ2_XXS`), context is configured to **32,768 tokens (32K) by default** with `q4_0` quantized KV cache to guarantee zero OOM risk while maximizing multi-turn and agentic headroom.
 
 > ⚠️ **Personal workstation benchmark harness. Not for enterprise use. Use at your own risk.**
 
@@ -28,7 +28,7 @@ GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active
 | **Runtime** | Unsloth `llama.cpp` (`glm5next/upstream`) | Native Grace-Blackwell SM 121 (`121a`) CUDA 13 build |
 | **Primary Quant** | `UD-IQ3_XXS` (~120.37 GB) | 3-bit GGUF (single-slot benchmark profile) |
 | **Safe Fallback Quant** | `UD-IQ2_XXS` (~101.84 GB) | 2-bit GGUF (recommended daily baseline; ~20 GB free) |
-| **Context Window (DGX Spark)** | `8,192` default (up to `32,768`) | Sized to fit 128 GB unified memory budget without swap |
+| **Context Window (DGX Spark)** | `32,768` (32K) default | Sized to fit 128 GB unified memory budget with `q4_0` KV cache |
 | **KV Cache Quantization** | `q4_0` / `q8_0` | Default: `q4_0` (preserves memory headroom) |
 | **Hardware** | NVIDIA DGX Spark / GB10 | Grace-Blackwell ARM + Blackwell GPU, 128GB Unified Memory |
 | **Swap Status** | **Disabled** | Host memory allocations must remain strictly within 128 GB |

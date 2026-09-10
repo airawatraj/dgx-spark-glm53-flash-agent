@@ -16,7 +16,7 @@
 #   PORT             - Host port (default: 8000)
 #   MODEL_ALIAS      - Served model name for OpenAI API (default: Cogni-Brain)
 #   QUANT            - Quantization profile (default: UD-IQ3_XXS; fallback: UD-IQ2_XXS)
-#   CTX_SIZE         - Token context window (default: 8192; max: 131072 with tuned KV)
+#   CTX_SIZE         - Token context window (default: 32768; max: 131072 with tuned KV)
 #   PARALLEL         - Concurrent request slots (default: 1)
 #   CACHE_TYPE_K     - KV cache K quantization: "f16" | "q8_0" | "q4_0" (default: q4_0)
 #   CACHE_TYPE_V     - KV cache V quantization: "f16" | "q8_0" | "q4_0" (default: q4_0)
@@ -38,7 +38,7 @@ PORT="${PORT:-8000}"
 MODEL_ALIAS="${MODEL_ALIAS:-Cogni-Brain}"
 
 # ── Memory & Safety Tuning Defaults (DGX Spark) ──────────────────────────────
-CTX_SIZE="${CTX_SIZE:-8192}"
+CTX_SIZE="${CTX_SIZE:-32768}"
 PARALLEL="${PARALLEL:-1}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-q4_0}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-q4_0}"

@@ -95,11 +95,11 @@ bash benchmark/smoke_test.sh localhost:8000
 # 1. Single-stream decode speed, TTFT, concurrency, and context sweep:
 uv run benchmark/benchmark_speed.py
 
-# 2. Spark Arena / llama-benchy multi-depth sweep:
-uv run benchmark/benchmark_speed_arena.py
-
-# 3. Agentic tool calling benchmark (tool-eval-bench):
+# 2. Agentic tool calling benchmark (tool-eval-bench):
 uv run benchmark/benchmark_smarts.py
+
+# 3. Full Spark Arena / llama-benchy multi-depth sweep (long-running):
+uv run benchmark/benchmark_speed_arena.py
 ```
 
 ---
@@ -156,6 +156,10 @@ Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selec
 
 ![Cogni-Brain Tool Eval Benchmark](assets/benchmark_smarts_eval.png)
 ![Cogni-Brain Tool Eval Summary](assets/benchmark_smarts_results.png)
+
+### 3. Full Spark Arena Context Sweep (`benchmark/benchmark_speed_arena.py`)
+
+Runs the long-form `llama-benchy` matrix across prompt prefill depths (0, 2048, 4096, 8192, 16384) and concurrencies (1, 2). Results are saved to `benchmark/results_arena.csv`.
 
 ---
 

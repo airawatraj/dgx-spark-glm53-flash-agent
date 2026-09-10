@@ -25,7 +25,7 @@ GLM-5.3-Flash (code named **`ox-alpha`**) is a 320B total parameter / 18B active
 | **Served Model Name** | `Cogni-Brain` | OpenAI-compatible endpoint alias |
 | **Docker Container** | `spark-brain` | Lifecycle managed via `docker/*.sh` |
 | **Port** | `8000` | Exposed at `http://localhost:8000/v1` |
-| **Runtime** | Unsloth `llama.cpp` (`glm5next/upstream`) | Native Grace-Blackwell SM 120 CUDA build |
+| **Runtime** | Unsloth `llama.cpp` (`glm5next/upstream`) | Native Grace-Blackwell SM 121 (`121a`) CUDA 13 build |
 | **Primary Quant** | `UD-IQ3_XXS` (~120.37 GB) | 3-bit GGUF (single-slot benchmark profile) |
 | **Safe Fallback Quant** | `UD-IQ2_XXS` (~101.84 GB) | 2-bit GGUF (recommended daily baseline; ~20 GB free) |
 | **Context Window (DGX Spark)** | `8,192` default (up to `32,768`) | Sized to fit 128 GB unified memory budget without swap |
@@ -59,7 +59,7 @@ QUANT=UD-IQ2_XXS bash setup/download_model.sh
 ```
 
 ### 3. Build Docker Image
-Build the CUDA container with native Grace-Blackwell (SM 120 / Blackwell GB10) support:
+Build the CUDA container with native Grace-Blackwell (SM 121 / Blackwell GB10 `121a`) support:
 
 ```bash
 bash docker/build.sh

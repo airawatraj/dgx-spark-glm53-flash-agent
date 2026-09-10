@@ -18,7 +18,7 @@ echo
 echo "[1/6] Checking Docker & Container Toolkit..."
 if command -v docker >/dev/null 2>&1; then
   docker version --format '  Docker Server Version: {{.Server.Version}}' || true
-  if docker run --rm --gpus all nvidia/cuda:12.8.1-base-ubuntu24.04 nvidia-smi >/dev/null 2>&1; then
+  if docker run --rm --gpus all nvidia/cuda:13.0.3-cudnn-devel-ubuntu24.04 nvidia-smi >/dev/null 2>&1 || docker run --rm --gpus all nvidia/cuda:12.8.1-base-ubuntu24.04 nvidia-smi >/dev/null 2>&1; then
     echo "  NVIDIA Container Toolkit: OK"
   else
     echo "  NOTE: GPU container pass-through verification skipped or requires permissions."

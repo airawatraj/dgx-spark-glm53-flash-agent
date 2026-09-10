@@ -1,6 +1,6 @@
 # Build llama.cpp with Unsloth's GLM-5.3-Flash branch on DGX Spark (GB10 / SM 12.1)
 # Requires NVIDIA Container Toolkit with --gpus all at runtime.
-FROM nvidia/cuda:12.8.1-devel-ubuntu24.04
+FROM nvidia/cuda:13.0.3-cudnn-devel-ubuntu24.04
 
 ARG LLAMA_REPO=https://github.com/unslothai/llama.cpp
 ARG LLAMA_BRANCH=glm5next/upstream
@@ -20,7 +20,7 @@ RUN git clone --branch "${LLAMA_BRANCH}" "${LLAMA_REPO}" llama.cpp \
   && cmake llama.cpp -B llama.cpp/build \
        -DBUILD_SHARED_LIBS=OFF \
        -DGGML_CUDA=ON \
-       -DCMAKE_CUDA_ARCHITECTURES="120" \
+       -DCMAKE_CUDA_ARCHITECTURES="121a" \
   && cmake --build llama.cpp/build --config Release -j --clean-first \
        --target llama-cli llama-mtmd-cli llama-server llama-gguf-split
 

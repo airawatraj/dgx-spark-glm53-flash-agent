@@ -162,7 +162,7 @@ Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selec
 
 ### 3. Full Spark Arena Context Sweep (`benchmark/benchmark_speed_arena.py`)
 
-Runs the long-form `llama-benchy` matrix across prompt prefill depths (0, 2048, 4096, 8192, 16384) and concurrencies (1, 2) for submission to [spark-arena.com](https://spark-arena.com). Because this full multi-depth sweep takes ~25–35 minutes, run it in a detached `tmux` session on your DGX Spark:
+Runs the long-form `llama-benchy` matrix across prompt prefill depths (0, 2048, 4096, 8192, 16384, 24576, 30592) and concurrencies (1, 2) for submission to [spark-arena.com](https://spark-arena.com). The maximum depth (30,592) is sized so that `depth + pp(2048) + tg(128) = 32,768`, exercising the full 32K context window. Because this full multi-depth sweep takes ~35–50 minutes, run it in a detached `tmux` session on your DGX Spark:
 
 ```bash
 # 1. Start a persistent tmux session:

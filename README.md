@@ -1,4 +1,4 @@
-# Benchmarking Cogni-Brain (GLM-5.3-Flash) on DGX Spark
+# Cogni-Brain (GLM-5.3-Flash) on Single DGX Spark
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![Base Model](https://img.shields.io/badge/base%20model-GLM--5.3--Flash%20%28ox--alpha%29-limegreen)
@@ -151,8 +151,8 @@ Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selec
 | **Multi-Step Chains** | **100%** (6/6) | Search $\to$ Read $\to$ Act, conditional branching, parallel tasks |
 | **Restraint & Refusal** | **100%** (6/6) | Trivial knowledge without tool use, impossible request clean refusal |
 | **Error Recovery** | **100%** (6/6) | Empty results retry, malformed response handling |
-| **Deployability** | **73 / 100** | $\alpha = 0.7$, median turn: 13.3s |
-| **Total Evaluation Tokens** | 32,685 tokens | Efficiency: 0.9 pts / 1K tokens (completed in 501.4s) |
+| **Deployability** | **73 / 100** | $\alpha = 0.7$, median turn: 12.3s |
+| **Total Evaluation Tokens** | 32,685 tokens | Efficiency: 0.9 pts / 1K tokens (completed in 459.9s) |
 
 ![Cogni-Brain Tool Eval Benchmark](assets/benchmark_smarts_eval.png)
 ![Cogni-Brain Tool Eval Summary](assets/benchmark_smarts_results.png)

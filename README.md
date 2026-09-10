@@ -62,7 +62,8 @@ QUANT=UD-IQ2_XXS bash setup/download_model.sh
 Build the CUDA container with native Grace-Blackwell (SM 121 / Blackwell GB10 `121a`) support:
 
 ```bash
-bash docker/build.sh
+# Use --no-cache to guarantee clean compilation of SM 121 kernels:
+bash docker/build.sh --no-cache
 ```
 
 ### 4. Start Cogni-Brain Server
@@ -76,9 +77,9 @@ QUANT=UD-IQ2_XXS bash docker/start.sh
 bash docker/start.sh
 ```
 
-Container management:
-- Status & memory check: `bash docker/status.sh`
-- Follow logs: `docker logs -f spark-brain`
+Container management & verification:
+- Follow logs to verify kernel initialization: `docker logs -f spark-brain`
+- Status & unified memory check: `bash docker/status.sh`
 - Stop container: `bash docker/stop.sh`
 
 ### 5. Smoke Test

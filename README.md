@@ -5,7 +5,7 @@
 ![Served Model](https://img.shields.io/badge/served%20model-Cogni--Brain-brightgreen)
 ![Runtime](https://img.shields.io/badge/runtime-llama.cpp%20%28SM%20121a%29-orange)
 ![Hardware](https://img.shields.io/badge/hardware-NVIDIA%20DGX%20Spark-brightgreen?logo=nvidia&logoColor=white)
-![Tool Eval](https://img.shields.io/badge/tool--eval-100%2F100%20%2815%2F15%20PASS%29-success)
+![Tool Eval](https://img.shields.io/badge/tool--eval%20short-100%2F100%20%2815%2F15%20PASS%29-success)
 ![Decode Speed](https://img.shields.io/badge/decode-18.7%20tok%2Fs-brightgreen)
 ![Quantization](https://img.shields.io/badge/quantization-UD--IQ2__XXS-blueviolet)
 ![Context](https://img.shields.io/badge/context-32K-blue)
@@ -95,8 +95,17 @@ bash benchmark/smoke_test.sh localhost:8000
 # 1. Single-stream decode speed, TTFT, concurrency, and context sweep:
 uv run benchmark/benchmark_speed.py
 
-# 2. Agentic tool calling benchmark (tool-eval-bench):
+# 2. Full 69-scenario agentic tool-eval benchmark (~30–50 min):
 uv run benchmark/benchmark_smarts.py
+
+# 2a. Quick 15-scenario smoke test (faster, less comprehensive):
+uv run benchmark/benchmark_smarts.py --mode short
+
+# 2b. Full suite + academic quality benchmarks + throughput profiling:
+uv run benchmark/benchmark_smarts.py --perf --gsm8k --mmlu --ifeval
+
+# 2c. Full suite + MTP speculative decoding benchmark (requires MTP_DRAFT=2):
+uv run benchmark/benchmark_smarts.py --spec-bench
 ```
 
 **3. Full Spark Arena sweep** — always run inside `tmux` (~35–50 min):
@@ -145,7 +154,7 @@ The benchmarks below were collected directly on a single **NVIDIA DGX Spark / GB
 
 ### 2. Agentic Quality & Tool Calling (`benchmark/benchmark_smarts.py`)
 
-Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selection, parameter precision, multi-step chains, restraint & refusal, and error recovery):
+Evaluated with `tool-eval-bench` **short suite** across 15 core tool scenarios (tool selection, parameter precision, multi-step chains, restraint & refusal, and error recovery):
 
 | Metric | Score | Details |
 |---|:---:|---|
@@ -159,6 +168,8 @@ Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selec
 | **Error Recovery** | **100%** (6/6) | Empty results retry, malformed response handling |
 | **Deployability** | **73 / 100** | $\alpha = 0.7$, median turn: 12.3s |
 | **Total Evaluation Tokens** | 32,685 tokens | Efficiency: 0.9 pts / 1K tokens (completed in 459.9s) |
+
+> 📊 **Full 69-scenario suite**: For community-comparable results covering safety, hallucination resistance, multi-turn state, autonomous planning, structured output, and academic benchmarks (GSM8K, MMLU, IFEval), run: `uv run benchmark/benchmark_smarts.py --gsm8k --mmlu --ifeval`
 
 ![Cogni-Brain Tool Eval Benchmark](assets/benchmark_smarts_eval.png)
 ![Cogni-Brain Tool Eval Summary](assets/benchmark_smarts_results.png)
@@ -181,7 +192,25 @@ uv run benchmark/benchmark_speed_arena.py --save-result benchmark/results_arena.
 tmux attach -t arena
 ```
 
-Results are saved to `benchmark/results_arena.csv` formatted for direct submission to Spark Arena.
+#### Verified Spark Arena Results (Full 32K Matrix)
+
+Measured on **NVIDIA DGX Spark / GB10** (128 GB Unified Memory, CUDA 13.0, Driver 580.173.02, swap disabled):
+
+| Context Depth | Total Tokens (`pp+tg`) | Prefill Throughput (`c1`) | Decode Throughput (`c1`) | Peak Decode | TTFT (`c1`) | Concurrent Decode (`c2 req`) |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **0** | 2,176 | **211.31** ± 1.76 tok/s | **18.45** ± 0.03 tok/s | 19.00 tok/s | 9,695 ms | 18.38 tok/s |
+| **2,048** | 4,224 | **216.06** ± 2.18 tok/s | **18.18** ± 0.01 tok/s | 19.00 tok/s | 18,962 ms | 18.17 tok/s |
+| **4,096** | 6,272 | **216.64** ± 2.56 tok/s | **18.00** ± 0.03 tok/s | 18.67 tok/s | 28,367 ms | 18.05 tok/s |
+| **8,192** | 10,368 | **210.34** ± 1.27 tok/s | **17.81** ± 0.09 tok/s | 18.00 tok/s | 48,689 ms | 17.79 tok/s |
+| **16,384** | 18,560 | **204.40** ± 0.84 tok/s | **17.27** ± 0.01 tok/s | 18.00 tok/s | 90,182 ms | 17.07 tok/s |
+| **24,576** | 26,752 | **199.15** ± 0.59 tok/s | **16.32** ± 0.01 tok/s | 17.00 tok/s | 133,694 ms | 16.35 tok/s |
+| **30,592** | **32,768** | **194.31** ± 0.37 tok/s | **16.03** ± 0.01 tok/s | 17.00 tok/s | 167,986 ms | 16.07 tok/s |
+
+**Key Findings:**
+- **Zero OOM / 100% Pass**: Reached the theoretical 32,768-token ceiling without memory exhaustion on DGX Spark (swap disabled).
+- **Prefill Stability (194–216 tok/s)**: Prefill drops by only **8.0%** from 2K to 32K context due to hybrid linear attention, avoiding quadratic attention slowdown.
+- **Sustained Decode (16.0–18.5 tok/s)**: Generates at **16.03 tok/s** even at 32K depth (**86.9% retention** of shallow decode speed).
+- **Linear TTFT Scaling**: Prompt processing scales linearly at ~5.14 ms per token ($R^2 \approx 0.999$).
 
 > 🧪 **Frontier Experiments & 64K Scaling**: For detailed memory profiling, theoretical scaling limits, and instructions to push the context window up to **64K tokens (`65,536`)**, see [EXPERIMENTS.md](EXPERIMENTS.md).
 

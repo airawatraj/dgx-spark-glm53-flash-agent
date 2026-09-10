@@ -152,12 +152,85 @@ curl http://localhost:8000/v1/chat/completions \
 
 ---
 
-## 3. Future Research Directions
+## 3. Experiment: MTP Speculative Decoding
 
-1. **MTP (Multi-Token Prediction) Speculative Decoding**:
-   - Upstream GLM-5.3-Flash includes a 2-token speculative draft head.
-   - Benchmark decode speed delta between `MTP=0` (base 18.7 tok/s) and `MTP=2` (estimated 28–34 tok/s).
-2. **True Multi-Slot Serving (`PARALLEL=2`)**:
+GLM-5.3-Flash includes a 2-token speculative draft head. The forum community reports **26–38 effective tok/s** with speculative decoding on similar quantizations (vs ~18 tok/s base). `docker/start.sh` supports this via `MTP_DRAFT`.
+
+### Runbook: MTP Benchmark
+
+```bash
+# 1. Stop current container
+bash docker/stop.sh
+
+# 2. Start with MTP speculative decoding enabled (2 draft tokens)
+MTP_DRAFT=2 bash docker/start.sh
+
+# 3. Run smoke test to verify MTP is active
+bash benchmark/smoke_test.sh localhost:8000
+
+# 4. Run full tool-eval with spec-bench to measure acceptance rate
+tmux new -s mtp
+uv run benchmark/benchmark_smarts.py --spec-bench --perf
+# Detach: Ctrl+b, then d
+
+# 5. Compare results:
+#    - Effective tok/s vs baseline 18.7 tok/s
+#    - Acceptance rate (α) per prompt type
+#    - Draft window utilization (τ / win)
+```
+
+Expected metrics to compare against baseline (`MTP=0`):
+
+| Metric | Baseline (`MTP=0`) | Target (`MTP=2`) |
+|---|:---:|:---:|
+| **Decode tok/s** | 18.7 | ~28–34 (estimated) |
+| **Acceptance rate (α)** | N/A | 50–80% (prompt-dependent) |
+| **TTFT** | 707 ms | May increase slightly (draft head overhead) |
+
+---
+
+## 4. Experiment: Quantization Quality Comparison (IQ2 vs IQ3)
+
+Aggressive quantization degrades quality. Community comparisons show EXL3 2-bit GLM-5.3-Flash scoring **34% IFEval** (vs 76% for FP8 Qwen3.8-Flash-Next). This experiment measures the quality cost of quantization for your two profiles.
+
+### Runbook: Quality Comparison
+
+```bash
+# ── Profile 1: UD-IQ2_XXS (daily driver) ────────────────────────────
+bash docker/stop.sh
+QUANT=UD-IQ2_XXS bash docker/start.sh
+
+# Run full tool-eval + academic benchmarks (in tmux, ~60–90 min):
+tmux new -s quality-iq2
+uv run benchmark/benchmark_smarts.py --gsm8k --mmlu --ifeval --gsm8k-limit 50 --mmlu-limit 50 --ifeval-limit 100
+# Detach: Ctrl+b, then d
+
+# ── Profile 2: UD-IQ3_XXS (high fidelity, 16K context only) ─────────
+bash docker/stop.sh
+QUANT=UD-IQ3_XXS CTX_SIZE=16384 PARALLEL=1 bash docker/start.sh
+
+# Run same benchmarks for direct comparison:
+tmux new -s quality-iq3
+uv run benchmark/benchmark_smarts.py --gsm8k --mmlu --ifeval --gsm8k-limit 50 --mmlu-limit 50 --ifeval-limit 100
+# Detach: Ctrl+b, then d
+```
+
+Key quality metrics to compare:
+
+| Metric | Community Reference (EXL3 2-bit) | UD-IQ2_XXS | UD-IQ3_XXS |
+|---|:---:|:---:|:---:|
+| **Tool-Eval (69 scenarios)** | 85/100 | TBD | TBD |
+| **GSM8K (math)** | 96% | TBD | TBD |
+| **MMLU (knowledge)** | 70% | TBD | TBD |
+| **IFEval (instruction following)** | 34% | TBD | TBD |
+
+---
+
+## 5. Future Research Directions
+
+1. **True Multi-Slot Serving (`PARALLEL=2`)**:
    - Benchmark memory envelope when running dual concurrent slots under `CTX_SIZE=16384`.
-3. **131K Extreme Context Investigation**:
+2. **131K Extreme Context Investigation**:
    - Investigate whether dynamic KV offloading or `iq2_s` quantized KV cache can bring the 131K indexer footprint within the 128 GB threshold.
+3. **KV Cache Precision Study**:
+   - Compare `q4_0` vs `q8_0` vs `f16` KV cache impact on tool-eval and IFEval quality. Community consensus is that higher-precision KV cache is critical for GLM-5.3-Flash long-context quality.

@@ -117,25 +117,43 @@ uv run benchmark/benchmark_smarts.py
 
 ---
 
-## Benchmark Results (Placeholders — Awaiting On-Device Run)
+## Benchmark Results (Verified on DGX Spark GB10)
 
-> ℹ️ *This model has not been tested on DGX Spark yet. The tables below are placeholders awaiting verified runs on hardware.*
+The benchmarks below were collected directly on a single **NVIDIA DGX Spark / GB10** (128 GB Unified Memory, swap disabled, CUDA 13.0, Driver 580.173.02) running `Cogni-Brain` (`unsloth/GLM-5.3-Flash-GGUF` `UD-IQ2_XXS`) in container `spark-brain`.
 
-### 1. Baseline Speed & Latency (`benchmark/benchmark_speed.py`)
+### 1. Speed & Latency Benchmarks (`benchmark/benchmark_speed.py`)
 
-| Profile | Quant | Context | Decode Speed | TTFT | Status |
-|---|---|---|:---:|:---:|:---:|
-| Baseline ($n=0$) | `UD-IQ3_XXS` | 8,192 | *Pending run* | *Pending run* | Untested |
-| Baseline ($n=0$) | `UD-IQ2_XXS` | 8,192 | *Pending run* | *Pending run* | Untested |
-| MTP Draft ($n=2$) | `UD-IQ3_XXS` | 8,192 | *Pending run* | *Pending run* | Untested |
+| Benchmark Phase | Context | Metric / Value | Details |
+|---|:---:|---|---|
+| **Smoke Test: TTFT & Prefill** | ~1,113 tokens | **223 tok/s** (TTFT: 4,995 ms) | 1,113 tokens prefilled in 5.00s |
+| **Smoke Test: Single-Stream Decode** | 128 tokens | **14.6 tok/s** | 128 tokens decoded in 8.78s |
+| **Baseline Single-Stream Decode** | 256 tokens | **15.7 tok/s** (Peak: **15.9 tok/s**) | 3-run avg, TTFT: **695 ms** (256 reasoning chunks) |
+| **Concurrency: 1 Stream** | 256 tokens | **15.3 aggregate tok/s** | 1/1 OK in 16.8s |
+| **Concurrency: 2 Streams** | 256 tokens | **15.0 aggregate tok/s** | 2/2 OK in 34.0s (queued under single-slot) |
+| **Context Scaling: ~1,024 Tokens** | ~1,024 tokens | **15.6 tok/s** (TTFT: 5,797 ms) | 64 tokens generated in 9.9s |
+| **Context Scaling: ~4,096 Tokens** | ~4,096 tokens | **15.4 tok/s** (TTFT: 18,386 ms) | 64 tokens generated in 22.5s |
 
-### 2. Full Arena Context Sweep (`benchmark/benchmark_speed_arena.py`)
+![Cogni-Brain Speed Benchmark](assets/benchmark_speed.png)
 
-*Awaiting run. Results will be saved to `benchmark/results_arena.csv`.*
+### 2. Agentic Quality & Tool Calling (`benchmark/benchmark_smarts.py`)
 
-### 3. Agentic Quality (`benchmark/benchmark_smarts.py`)
+Evaluated with `tool-eval-bench` across 15 real-world tool scenarios (tool selection, parameter precision, multi-step chains, restraint & refusal, and error recovery):
 
-*Awaiting run via tool-eval-bench.*
+| Metric | Score | Details |
+|---|:---:|---|
+| **Overall Score** | **100 / 100** | Rating: ★★★★★ Excellent |
+| **Scenarios Passed** | **15 / 15** | 30 / 30 points (100% pass rate, 0 partial, 0 failed) |
+| **Quality** | **100 / 100** | Flawless tool routing and argument schema compliance |
+| **Tool Selection** | **100%** (6/6) | Direct specialist match and distractor resistance |
+| **Parameter Precision** | **100%** (6/6) | Date/time parsing, unit handling, multi-value extraction |
+| **Multi-Step Chains** | **100%** (6/6) | Search $\to$ Read $\to$ Act, conditional branching, parallel tasks |
+| **Restraint & Refusal** | **100%** (6/6) | Trivial knowledge without tool use, impossible request clean refusal |
+| **Error Recovery** | **100%** (6/6) | Empty results retry, malformed response handling |
+| **Deployability** | **73 / 100** | $\alpha = 0.7$, median turn: 13.3s |
+| **Total Evaluation Tokens** | 32,685 tokens | Efficiency: 0.9 pts / 1K tokens (completed in 501.4s) |
+
+![Cogni-Brain Tool Eval Benchmark](assets/benchmark_smarts_eval.png)
+![Cogni-Brain Tool Eval Summary](assets/benchmark_smarts_results.png)
 
 ---
 

@@ -47,9 +47,12 @@ def result_line(label, value, unit="", color="green"):
     print(f"  {c(label.ljust(32), 'dim')} {c(str(value), color)} {unit}")
 
 
-def make_prompt(target_tokens):
+def make_prompt(target_tokens, completion_reserve=96):
+    # GLM-5.3-Flash tokenizes this repetitive benchmark phrase at ~1.72 tokens per word.
+    # Reserve room for completion tokens so total sequence stays strictly within target context.
+    usable_tokens = max(10, target_tokens - completion_reserve)
     base = ("DGX Spark local inference benchmark on Grace-Blackwell. " * 50).split()
-    n_words = max(10, int(target_tokens / 1.33))
+    n_words = max(10, int(usable_tokens / 1.72))
     words = (base * ((n_words // len(base)) + 1))[:n_words]
     return " ".join(words) + "\n\nSummarize the benchmark hardware in one sentence."
 

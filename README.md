@@ -7,6 +7,7 @@
 ![Hardware](https://img.shields.io/badge/hardware-NVIDIA%20DGX%20Spark-brightgreen?logo=nvidia&logoColor=white)
 ![Tool Eval](https://img.shields.io/badge/tool--eval%20short-100%2F100%20%2815%2F15%20PASS%29-success)
 ![Decode Speed](https://img.shields.io/badge/decode-18.7%20tok%2Fs-brightgreen)
+[![Spark Arena](https://img.shields.io/badge/spark--arena-verified-darkgreen)](https://spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3)
 ![Quantization](https://img.shields.io/badge/quantization-UD--IQ2__XXS-blueviolet)
 ![Context](https://img.shields.io/badge/context-32K-blue)
 
@@ -192,6 +193,15 @@ uv run benchmark/benchmark_speed_arena.py --save-result benchmark/results_arena.
 tmux attach -t arena
 ```
 
+<p align="center">
+  <a href="https://spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3">
+    <img src="./assets/spark_arena_glm5_3_flash.png" width="800" alt="Spark Arena community benchmark — Cogni-Brain (GLM-5.3-Flash) 320B-A18B on single DGX Spark">
+  </a>
+</p>
+<p align="center">
+  <a href="https://spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3">Spark Arena community benchmark — Cogni-Brain (GLM-5.3-Flash) 320B-A18B on single DGX Spark</a>
+</p>
+
 #### Verified Spark Arena Results (Full 32K Matrix)
 
 Measured on **NVIDIA DGX Spark / GB10** (128 GB Unified Memory, CUDA 13.0, Driver 580.173.02, swap disabled):
@@ -211,6 +221,8 @@ Measured on **NVIDIA DGX Spark / GB10** (128 GB Unified Memory, CUDA 13.0, Drive
 - **Prefill Stability (194–216 tok/s)**: Prefill drops by only **8.0%** from 2K to 32K context due to hybrid linear attention, avoiding quadratic attention slowdown.
 - **Sustained Decode (16.0–18.5 tok/s)**: Generates at **16.03 tok/s** even at 32K depth (**86.9% retention** of shallow decode speed).
 - **Linear TTFT Scaling**: Prompt processing scales linearly at ~5.14 ms per token ($R^2 \approx 0.999$).
+
+> Source: [spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3](https://spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3) · `spark_arena_glm5_3_flash.png` in `assets/`
 
 > 🧪 **Frontier Experiments & 64K Scaling**: For detailed memory profiling, theoretical scaling limits, and instructions to push the context window up to **64K tokens (`65,536`)**, see [EXPERIMENTS.md](EXPERIMENTS.md).
 

@@ -45,6 +45,14 @@ Evaluated against `tool-eval-bench` across 15 real-world tool scenarios:
 
 ---
 
+### C. Verified Spark Arena Benchmark (32K Multi-Depth Sweep)
+
+[![Spark Arena Benchmark](assets/spark_arena_glm5_3_flash.png)](https://spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3)
+
+> 🔗 **Interactive Online Submission:** [spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3](https://spark-arena.com/benchmark/8b333138-2035-44d0-80da-cc1ee71faef3) · Recorded on single NVIDIA DGX Spark (128 GB Unified Memory) with `UD-IQ2_XXS` and 32K context window.
+
+---
+
 ## 2. Frontier Experiment: Pushing Context Limits to 64K (`65,536` Tokens)
 
 ### A. Architectural & Memory Feasibility
